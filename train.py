@@ -38,7 +38,7 @@ arg_parser.add_argument(
     "--satellite",
     type=str,
     default="sentinel_2",
-    help="sentinel_1, sentinel_2, or planet_5day",
+    help="sentinel_1, sentinel_2, planet_5day, or s1_s2",
 )
 arg_parser.add_argument(
     "--pos", type=str, default="both", help="Can be: both, 34S_19E_258N, 34S_19E_259N"
