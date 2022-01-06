@@ -33,7 +33,7 @@ arg_parser = ArgumentParser()
 arg_parser.add_argument(
     "--competition", 
     type=str, 
-    default="germany",
+    default="south_africa",
     help="germany, south_africa"
 )
 arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
