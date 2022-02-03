@@ -207,10 +207,6 @@ class Sentinel2Transform(EOTransformer):
             assert np.isnan(ndvi).sum() == 0, "NDVI contains NaN"
             ndvi = ndvi[:, np.newaxis]
 
-        # import pdb
-
-        # pdb.set_trace()
-
         if self.include_bands and self.include_cloud and self.include_ndvi:
             image_stack = np.concatenate((image_stack, ndvi), axis=1)
         elif self.include_bands and not self.include_cloud and self.include_ndvi:
