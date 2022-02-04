@@ -9,6 +9,8 @@ import numpy as np
 import torch
 import pdb
 
+from src.utils.lstm import LSTM
+
 
 class EOTransformer:
     """
@@ -39,7 +41,9 @@ class EOTransformer:
         self.temporal_augmentation = temporal_augmentation
 
         if temporal_augmentation:
-            self.temporal_augmentation_model = torch.nn.Identity()
+            self.temporal_augmentation_model = LSTM(
+                128, 0.57, True  
+            )
         else:
             self.temporal_augmentation_model = None
 
@@ -51,9 +55,9 @@ class EOTransformer:
             image_stack -= 0.1014 + np.random.normal(scale=0.01)
             image_stack /= 0.1171 + np.random.normal(scale=0.01)
 
-        return torch.from_numpy(np.ascontiguousarray(image_stack)).float(), torch.from_numpy(
-            np.ascontiguousarray(mask)
-        )
+        return torch.from_numpy(
+            np.ascontiguousarray(image_stack)
+        ).float(), torch.from_numpy(np.ascontiguousarray(mask))
 
     def transform(self, image_stack, mask=None, return_unnormalized_numpy=False):
         """
@@ -64,16 +68,21 @@ class EOTransformer:
         :return: image_stack, mask
         """
         assert (mask > 0).any(), "mask all 0s"
+
         if (
             self.spatial_backbone == "mean_pixel" or self.spatial_backbone == "none"
         ):  # average over field mask: T, D = image_stack.shape
             image_stack = np.mean(image_stack[:, :, mask > 0], axis=2)
-            mask = -1  # mask is meaningless now but needs to be constant size for batching
+            mask = (
+                -1
+            )  # mask is meaningless now but needs to be constant size for batching
         elif (
             self.spatial_backbone == "median_pixel"
         ):  # average over field mask: T, D = image_stack.shape
             image_stack = np.median(image_stack[:, :, mask > 0], axis=2)
-            mask = -1  # mask is meaningless now but needs to be constant size for batching
+            mask = (
+                -1
+            )  # mask is meaningless now but needs to be constant size for batching
         elif self.spatial_backbone == "pixelsetencoder":
             # Sample S pixels from image
             image_stack, mask = random_pixel_set(
@@ -89,7 +98,10 @@ class EOTransformer:
             mask = -1
 
         else:  # crop/pad image to fixed size + augmentations: T, D, H, W = image_stack.shape
-            if image_stack.shape[2] >= self.image_size and image_stack.shape[3] >= self.image_size:
+            if (
+                image_stack.shape[2] >= self.image_size
+                and image_stack.shape[3] >= self.image_size
+            ):
                 image_stack, mask = random_crop(image_stack, mask, self.image_size)
 
             image_stack, mask = crop_or_pad_to_size(image_stack, mask, self.image_size)
@@ -108,6 +120,9 @@ class EOTransformer:
             # if np.random.rand() < 0.5:
             #     image_stack = np.fliplr(image_stack)
             #     mask = np.fliplr(mask)
+
+        if self.temporal_augmentation:
+            image_stack, mask = self.temporal_augmentation_model(image_stack, mask, 5) # 5 is a temporary value; will change to a variable
 
         if return_unnormalized_numpy:
             return image_stack, mask
@@ -148,7 +163,9 @@ class PlanetTransform(EOTransformer):
 
     def transform(self, image_stack, mask=None):
 
-        image_stack, mask = super().transform(image_stack, mask, return_unnormalized_numpy=True)
+        image_stack, mask = super().transform(
+            image_stack, mask, return_unnormalized_numpy=True
+        )
 
         if self.include_ndvi:
             red = image_stack[:, 2]
@@ -183,7 +200,9 @@ class Sentinel1Transform(EOTransformer):
 
     def transform(self, image_stack, mask=None):
 
-        image_stack, mask = super().transform(image_stack, mask, return_unnormalized_numpy=True)
+        image_stack, mask = super().transform(
+            image_stack, mask, return_unnormalized_numpy=True
+        )
 
         if self.include_rvi:
             VV = image_stack[:, 0]
@@ -220,7 +239,9 @@ class Sentinel2Transform(EOTransformer):
 
     def transform(self, image_stack, mask=None):
 
-        image_stack, mask = super().transform(image_stack, mask, return_unnormalized_numpy=True)
+        image_stack, mask = super().transform(
+            image_stack, mask, return_unnormalized_numpy=True
+        )
 
         if self.include_ndvi:
             nir = image_stack[:, 7]
@@ -324,7 +345,9 @@ def random_pixel_set(image_stack, mask, sample_size=64, jitter=(0.01, 0.05)):
     field_pixels = image_stack[:, :, mask > 0]
     field_pixel_amount = int(mask.sum())
     if sample_size < field_pixel_amount:
-        idx = np.random.choice(list(range(field_pixel_amount)), size=sample_size, replace=False)
+        idx = np.random.choice(
+            list(range(field_pixel_amount)), size=sample_size, replace=False
+        )
         random_pixels = field_pixels[:, :, idx]
         S_mask = np.ones(sample_size, dtype=int)
 
@@ -342,7 +365,9 @@ def random_pixel_set(image_stack, mask, sample_size=64, jitter=(0.01, 0.05)):
         random_pixels = field_pixels
         S_mask = np.ones(sample_size, dtype=int)
 
-    S_mask = np.stack([S_mask] * field_pixels.shape[0], axis=0)  # Add temporal dimension to mask
+    S_mask = np.stack(
+        [S_mask] * field_pixels.shape[0], axis=0
+    )  # Add temporal dimension to mask
 
     if jitter is not None:
         sigma, clip = jitter
