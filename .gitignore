@@ -8,7 +8,7 @@ temporal_augment_model_dump
 wandb
 __pycache__
 submissions
-g_lr_1e-*
+result/g_lr_1e-*
 
 exp.py
 

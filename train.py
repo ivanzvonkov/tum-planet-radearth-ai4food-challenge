@@ -74,7 +74,7 @@ arg_parser.add_argument("--ta_probability", type=float, default=0.0)
 
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
 arg_parser.set_defaults(enable_wandb=True)
-arg_parser.add_argument("--name", type=str, default=None, help="Manually the run name (e.g., snowy-owl-10); None for automatic naming.")
+arg_parser.add_argument("--name", type=str, default="", help="Manually the run name (e.g., snowy-owl-10); None for automatic naming.")
 arg_parser.add_argument("--unique", dest="unique", action="store_true", help="Make the name unique by appending random digits after the name")
 arg_parser.set_defaults(unique=False)
 arg_parser.add_argument("--project", type=str, default="original", help="original (Ivan), kevin")
@@ -103,7 +103,7 @@ if config['project'] == 'original':
 else:
     config['project'] = "ai4food-challenge-germany"
 
-if str(config['name']) == 'None':
+if str(config['name']) == '':
     config['name'] = None
 elif config['unique']:
     config['name'] += "_" + str(int(time.time()))[-4:]

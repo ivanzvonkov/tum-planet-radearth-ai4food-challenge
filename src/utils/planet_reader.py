@@ -148,11 +148,15 @@ class PlanetReader(torch.utils.data.Dataset):
         inputs = glob.glob(input_dir + "/*/*sr.tif", recursive=True)
         tifs = sorted(inputs)
 
-        # read coordinate system of tifs and project labels to the same coordinate reference system (crs)
-        with rio.open(tifs[0]) as image:
-            crs = image.crs
-            print("INFO: Coordinate system of the data is: {}".format(crs))
-            transform = image.transform
+        if "dlr_fusion_competition_germany_train_source_planet" in input_dir:
+            # Needed because the sr.tif files have been removed for space management
+            crs = "EPSG:25833"
+        else:
+            # read coordinate system of tifs and project labels to the same coordinate reference system (crs)
+            with rio.open(tifs[0]) as image:
+                crs = image.crs
+                print("INFO: Coordinate system of the data is: {}".format(crs))
+                transform = image.transform
 
         mask = labels.geometry.area > min_area_to_ignore
         print(
