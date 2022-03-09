@@ -71,6 +71,7 @@ arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0)
 arg_parser.add_argument("--lr_scheduler", type=str, default="none")
 arg_parser.add_argument("--ta_model_path", type=str, default="")
 arg_parser.add_argument("--ta_probability", type=float, default=0.0)
+arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 < value < 1.0")
 
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
 arg_parser.set_defaults(enable_wandb=True)
@@ -92,6 +93,7 @@ assert config["satellite"] in [
 assert config["pos"] in ["both_34", "34S_19E_258N", "34S_19E_259N", "33N_18E_242N"]
 assert config["competition"] in ["germany", "south_africa"]
 assert config["split_by"] in [None, "latitude", "longitude"]
+assert 0. <= config["window_slice"] <= 1.
 
 if config['competition'] == 'germany':
     assert config['pos'] == "33N_18E_242N"
@@ -128,6 +130,7 @@ kwargs = dict(
     s1_temporal_dropout=config["s1_temporal_dropout"],
     s2_temporal_dropout=config["s2_temporal_dropout"],
     planet_temporal_dropout=config["planet_temporal_dropout"],
+    window_slice=config["window_slice"],
 )
 
 if config["pos"] == "both_34":

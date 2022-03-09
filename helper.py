@@ -38,6 +38,7 @@ def load_reader(
     s1_temporal_dropout: float = 0.0,
     s2_temporal_dropout: float = 0.0,
     planet_temporal_dropout: float = 0.0,
+    window_slice: float = 0.0,
 ):
     if competition == "south_africa":
         country = "ref_fusion_competition_south_africa"
@@ -117,6 +118,7 @@ def load_reader(
             filter=sentinel_1_redflags if competition == 'germany' else None,
             transform=s1_transform,
             temporal_dropout=s1_temporal_dropout,
+            window_slice=window_slice,
         )
     elif satellite == "sentinel_2":
         reader = S2Reader(
@@ -128,6 +130,7 @@ def load_reader(
             filter=sentinel_1_redflags if competition == 'germany' else None,
             transform=s2_transform,
             temporal_dropout=s2_temporal_dropout,
+            window_slice=window_slice,
         )
     elif satellite == "s1_s2":
         reader = S1S2Reader(
@@ -143,6 +146,7 @@ def load_reader(
             filter=sentinel_1_redflags if competition == 'germany' else None,
             s1_temporal_dropout=s1_temporal_dropout,
             s2_temporal_dropout=s2_temporal_dropout,
+            window_slice=window_slice,
         )
     elif satellite == "planet_5day":
         reader = PlanetReader(
@@ -152,6 +156,7 @@ def load_reader(
             min_area_to_ignore=min_area_to_ignore,
             transform=planet_transform,
             temporal_dropout=planet_temporal_dropout,
+            window_slice=window_slice,
         )
     elif satellite == "planet_daily":
         reader = PlanetReader(
@@ -161,6 +166,7 @@ def load_reader(
             min_area_to_ignore=min_area_to_ignore,
             transform=planet_transform,
             temporal_dropout=planet_temporal_dropout,
+            window_slice=window_slice,
         )
     elif satellite == "s1_s2_planet_daily":
         reader = S1S2PlanetReader(
@@ -177,6 +183,7 @@ def load_reader(
             s1_temporal_dropout=s1_temporal_dropout,
             s2_temporal_dropout=s2_temporal_dropout,
             planet_temporal_dropout=planet_temporal_dropout,
+            window_slice=window_slice,
         )
         
     return label_names, reader

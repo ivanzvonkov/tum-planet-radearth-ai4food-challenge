@@ -13,7 +13,6 @@ import os
 import json
 import zipfile
 import glob
-import pdb
 
 from datetime import datetime
 from pathlib import Path
@@ -36,6 +35,7 @@ class PlanetReader(torch.utils.data.Dataset):
         tzinfo=None,
         temporal_dropout=0.0,
         return_timesteps=False,
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -73,6 +73,7 @@ class PlanetReader(torch.utils.data.Dataset):
 
         self.temporal_dropout = temporal_dropout
         self.return_timesteps = return_timesteps
+        self.window_slice = window_slice
 
     def __len__(self):
         """
@@ -111,11 +112,16 @@ class PlanetReader(torch.utils.data.Dataset):
             label = self.crop_ids.index(feature.crop_id)
         else:
             label = feature.crop_id
-
         if self.temporal_dropout > 0:
             dropout_timesteps = np.random.rand(image_stack.shape[0]) > self.temporal_dropout
             image_stack = image_stack[dropout_timesteps]
             timesteps = self.timesteps[dropout_timesteps]
+        elif self.window_slice > 0.:
+            last_ind_allowed = int(image_stack.shape[0] * (1 - self.window_slice))
+            start = np.random.randint(0, last_ind_allowed)
+            end = start + int(image_stack.shape[0] - last_ind_allowed) + 1
+            image_stack = image_stack[start:end]
+            timesteps = self.timesteps[start:end]
         else:
             timesteps = self.timesteps
 

@@ -17,12 +17,15 @@ from helper import load_reader
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-competition = "ref_fusion_competition_south_africa"
-
 # Argument parser for command line arguments
 
 arg_parser = argparse.ArgumentParser(description="Train a model for temporal augmentation")
-arg_parser.add_argument("--competition", type=str, default=competition)
+arg_parser.add_argument(
+    "--competition", 
+    type=str, 
+    default="south_africa",
+    help="germany, south_africa"
+)
 arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
 arg_parser.add_argument("--batch_size", type=int, default=64)
 arg_parser.add_argument("--num_epochs", type=int, default=100)
@@ -30,7 +33,7 @@ arg_parser.add_argument(
     "--satellite", type=str, default="planet_daily", help="sentinel_2, planet_daily"
 )
 arg_parser.add_argument(
-    "--pos", type=str, default="both", help="Can be: both, 34S_19E_258N, 34S_19E_259N"
+    "--pos", type=str, default="both", help="Can be: both, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
 )
 arg_parser.add_argument("--lstm_lr", type=float, default=0.001)
 arg_parser.add_argument("--gp_lr", type=float, default=0.01)
@@ -53,7 +56,7 @@ config = arg_parser.parse_args().__dict__
 
 # Random seeds
 assert config["satellite"] in ["sentinel_2", "planet_daily", "planet_5day"]
-assert config["pos"] in ["both", "34S_19E_258N", "34S_19E_259N"]
+assert config["pos"] in ["both", "34S_19E_258N", "34S_19E_259N", "33N_18E_242N"]
 assert config["split_by"] in [None, "latitude", "longitude"]
 
 # ----------------------------------------------------------------------------------------------------------------------

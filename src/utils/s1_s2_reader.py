@@ -26,6 +26,7 @@ class S1S2Reader(Dataset):
         filter=None,
         s1_temporal_dropout=0.0,
         s2_temporal_dropout=0.0,
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -50,6 +51,7 @@ class S1S2Reader(Dataset):
             filter=filter,
             temporal_dropout=s1_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         self.s2_reader = S2Reader(
@@ -63,6 +65,7 @@ class S1S2Reader(Dataset):
             filter=filter,
             temporal_dropout=s2_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         if alignment == "1to2":
