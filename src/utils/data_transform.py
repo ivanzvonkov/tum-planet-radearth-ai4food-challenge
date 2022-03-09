@@ -138,6 +138,10 @@ class PlanetTransform(EOTransformer):
     per_band_mean = np.array([580.4186, 852.98376, 1136.9423, 2761.0286])
     per_band_std = np.array([179.95744, 209.66647, 384.34073, 476.9446])
 
+    # # Germany values
+    # per_band_mean = np.array([ 513.8759,  701.9154,  810.2146, 2778.312 ])
+    # per_band_std = np.array([136.59517, 172.02454, 289.7672 , 627.4169 ])
+
     def __init__(
         self,
         include_bands=True,
