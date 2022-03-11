@@ -22,6 +22,7 @@ class EOTransformer:
         image_size=32,
         pse_sample_size=64,
         is_train=True,
+        jitter=None,
     ):
         """
         THIS FUNCTION INITIALIZES THE DATA TRANSFORMER.
@@ -35,6 +36,7 @@ class EOTransformer:
         self.normalize = normalize
         self.pse_sample_size = pse_sample_size
         self.is_train = is_train
+        self.jitter = jitter
 
     def normalize_and_torchify(self, image_stack, mask=None):
         # image_stack = image_stack * 1e-4
@@ -122,6 +124,13 @@ class EOTransformer:
 
         #     return synthetic_image_stack, mask
 
+        if self.jitter is not None:
+            sigma, clip = self.jitter
+
+            image_stack = image_stack + np.clip(
+                sigma * np.random.randn(*image_stack.shape), -1 * clip, clip
+            )
+
         if return_unnormalized_numpy:
             return image_stack, mask
 
@@ -152,7 +161,7 @@ class PlanetTransform(EOTransformer):
         elif competition == "germany":
             PlanetTransform.per_band_mean = np.array([513.8759,  701.9154,  810.2146, 2778.312])
             PlanetTransform.per_band_std = np.array([136.59517, 172.02454, 289.7672, 627.4169])
-            
+
         self.include_bands = include_bands
         self.include_ndvi = include_ndvi
 

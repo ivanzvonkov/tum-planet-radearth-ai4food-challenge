@@ -1,3 +1,4 @@
+from typing import Optional, Tuple
 import geopandas as gpd
 import pdb
 import warnings
@@ -40,6 +41,7 @@ def load_reader(
     planet_temporal_dropout: float = 0.0,
     window_slice: float = 0.0,
     normalize: bool = True,
+    jitter: Optional[Tuple[float, float]] = None,
 ):
     if competition == "south_africa":
         country = "ref_fusion_competition_south_africa"
@@ -79,6 +81,7 @@ def load_reader(
         spatial_backbone=spatial_backbone,
         normalize=normalize,
         is_train=train_or_test == "train",
+        jitter=jitter,
     )
 
     fill = ""

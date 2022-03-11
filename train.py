@@ -49,7 +49,7 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     "--satellite",
     type=str,
-    default="sentinel_2",
+    default="planet_daily",
     help="sentinel_1, sentinel_2, or planet_5day, s1_s2, planet_daily, s1_s2_planet_daily",
 )
 arg_parser.add_argument(
@@ -76,6 +76,10 @@ arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0)
 arg_parser.add_argument("--ta_model_path", type=str, default="")
 arg_parser.add_argument("--ta_probability", type=float, default=0.0)
 arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 < value < 1.0")
+arg_parser.add_argument("--jitter", dest="jitter", action="store_true", help="enable jitter to use --sigma and --clip")
+arg_parser.set_defaults(jitter=False)
+arg_parser.add_argument("--sigma", type=float, default=0.01, help="value > 0.0")
+arg_parser.add_argument("--clip", type=float, default=0.05, help="value > 0.0")
 
 # WandB params
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
@@ -110,6 +114,12 @@ if config['project'] == 'original':
 else:
     config['project'] = "ai4food-challenge-germany"
 
+jitter = None
+
+if config["jitter"]:
+    jitter = (config["sigma"], config["clip"])
+    assert config["sigma"] > 0. and config["clip"] > 0.    
+
 if str(config['name']) == '':
     config['name'] = None
 elif config['unique']:
@@ -136,6 +146,7 @@ kwargs = dict(
     s2_temporal_dropout=config["s2_temporal_dropout"],
     planet_temporal_dropout=config["planet_temporal_dropout"],
     window_slice=config["window_slice"],
+    jitter=jitter
 )
 
 if config["pos"] == "both_34":
