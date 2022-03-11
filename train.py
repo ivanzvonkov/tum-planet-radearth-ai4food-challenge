@@ -30,15 +30,22 @@ torch.cuda.manual_seed_all(seed)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 arg_parser = ArgumentParser()
+
+# hyperparam
+arg_parser.add_argument("--batch_size", type=int, default=64)
+arg_parser.add_argument("--num_epochs", type=int, default=100)
+arg_parser.add_argument("--lr", type=float, default=0.001)
+arg_parser.add_argument("--lr_scheduler", type=str, default="none")
+arg_parser.add_argument("--optimizer", type=str, default="Adam")
+arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
+
+# param
 arg_parser.add_argument(
     "--competition", 
     type=str, 
     default="south_africa",
     help="germany, south_africa"
 )
-arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
-arg_parser.add_argument("--batch_size", type=int, default=64)
-arg_parser.add_argument("--num_epochs", type=int, default=100)
 arg_parser.add_argument(
     "--satellite",
     type=str,
@@ -48,31 +55,29 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     "--pos", type=str, default="both_34", help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
 )
-arg_parser.add_argument("--lr", type=float, default=0.001)
-arg_parser.add_argument("--optimizer", type=str, default="Adam")
-arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
 arg_parser.add_argument("--spatial_backbone", type=str, default="mean_pixel")
 arg_parser.add_argument("--temporal_backbone", type=str, default="tempcnn")
+arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
 arg_parser.add_argument("--image_size", type=int, default=32)
-arg_parser.add_argument("--save_model_threshold", type=float, default=0.7)
 arg_parser.add_argument("--pse_sample_size", type=int, default=32)
+arg_parser.add_argument("--save_model_threshold", type=float, default=0.7)
 arg_parser.add_argument("--validation_split", type=float, default=0.2)
 arg_parser.add_argument("--split_by", type=str, default="longitude", help="latitude or longitude")
 arg_parser.add_argument("--include_bands", type=bool, default=True)
 arg_parser.add_argument("--include_cloud", type=bool, default=True)
 arg_parser.add_argument("--include_ndvi", type=bool, default=False)
 arg_parser.add_argument("--include_rvi", type=bool, default=False)
-arg_parser.add_argument("--alignment", type=str, default="1to2", help="Can be: 1to2 or 2to1 (76 vs. 41 for SA, 144 vs. 122)")
 
-# WandB params
+# temporal augmentation
+arg_parser.add_argument("--alignment", type=str, default="1to2", help="Can be: 1to2 or 2to1 (76 vs. 41 for SA, 144 vs. 122)")
 arg_parser.add_argument("--s1_temporal_dropout", type=float, default=0.0)
 arg_parser.add_argument("--s2_temporal_dropout", type=float, default=0.0)
 arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--lr_scheduler", type=str, default="none")
 arg_parser.add_argument("--ta_model_path", type=str, default="")
 arg_parser.add_argument("--ta_probability", type=float, default=0.0)
 arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 < value < 1.0")
 
+# WandB params
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
 arg_parser.set_defaults(enable_wandb=True)
 arg_parser.add_argument("--name", type=str, default="", help="Manually the run name (e.g., snowy-owl-10); None for automatic naming.")
