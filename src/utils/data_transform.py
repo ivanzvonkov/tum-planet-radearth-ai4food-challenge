@@ -134,21 +134,25 @@ class PlanetTransform(EOTransformer):
     THIS CLASS INHERITS EOTRANSFORMER FOR DATA AUGMENTATION IN THE PLANET DATA
     """
 
-    # South Africa values
-    per_band_mean = np.array([580.4186, 852.98376, 1136.9423, 2761.0286])
-    per_band_std = np.array([179.95744, 209.66647, 384.34073, 476.9446])
-
-    # # Germany values
-    # per_band_mean = np.array([ 513.8759,  701.9154,  810.2146, 2778.312 ])
-    # per_band_std = np.array([136.59517, 172.02454, 289.7672 , 627.4169 ])
+    per_band_mean = []
+    per_band_std = []
 
     def __init__(
         self,
         include_bands=True,
         include_ndvi=True,
+        competition="south_africa",
         **kwargs,
     ):
         super().__init__(**kwargs)
+
+        if competition == "south_africa":
+            PlanetTransform.per_band_mean = np.array([580.4186, 852.98376, 1136.9423, 2761.0286])
+            PlanetTransform.per_band_std = np.array([179.95744, 209.66647, 384.34073, 476.9446])
+        elif competition == "germany":
+            PlanetTransform.per_band_mean = np.array([513.8759,  701.9154,  810.2146, 2778.312])
+            PlanetTransform.per_band_std = np.array([136.59517, 172.02454, 289.7672, 627.4169])
+            
         self.include_bands = include_bands
         self.include_ndvi = include_ndvi
 
@@ -157,7 +161,7 @@ class PlanetTransform(EOTransformer):
         image_stack, mask = super().transform(image_stack, mask, return_unnormalized_numpy=True)
 
         if self.normalize:
-            image_stack = (image_stack - self.per_band_mean) / self.per_band_std
+            image_stack = (image_stack - PlanetTransform.per_band_mean) / PlanetTransform.per_band_std
 
         if self.include_ndvi:
             red = image_stack[:, 2]

@@ -107,7 +107,7 @@ def load_reader(
         **kwargs,
     ).transform
     planet_transform = PlanetTransform(
-        include_bands=include_bands, include_ndvi=include_ndvi, **kwargs
+        include_bands=include_bands, include_ndvi=include_ndvi, competition=competition, **kwargs
     ).transform
 
     if satellite == "sentinel_1":

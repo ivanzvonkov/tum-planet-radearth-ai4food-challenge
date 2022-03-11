@@ -8,9 +8,10 @@ temporal_augment_model_dump
 wandb
 __pycache__
 submissions
-result/g_lr_1e-*
+result/*
 
 exp.py
+eva.py
 
 # Other repos
 DENETHOR

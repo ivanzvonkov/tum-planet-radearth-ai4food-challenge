@@ -143,7 +143,7 @@ report = classification_report(y_true, y_pred, target_names=names, output_dict=T
 print(f"Storing the report at {name}.npz...")
 
 np.savez(
-    f"{name}.npz",
+    f"result/{name}.npz",
     accuracy=accuracy,
     report=report,
 )
