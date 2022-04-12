@@ -54,11 +54,16 @@ _, reader = load_reader(
     include_ndvi=config["include_ndvi"],
     image_size=config["image_size"],
     spatial_backbone=config["spatial_backbone"],
+    include_rvi=config["include_rvi"],
+    pse_sample_size=config["pse_sample_size"],
     min_area_to_ignore=0,
     train_or_test="test",
+    alignment=config["alignment"],
     s1_temporal_dropout=0.0,
     s2_temporal_dropout=0.0,
     planet_temporal_dropout=0.0,
+    window_slice=0.0,
+    jitter=None
 )
 
 print("\u2713 Data loaded")

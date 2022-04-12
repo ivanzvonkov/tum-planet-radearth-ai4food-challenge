@@ -86,7 +86,6 @@ class PlanetReader(torch.utils.data.Dataset):
         THIS FUNCTION ITERATE OVER THE DATASET BY GIVEN ITEM NO AND RETURNS FOLLOWINGS:
         :return: image_stack in size of [Time Stamp, Image Dimension (Channel), Height, Width] , crop_label, field_mask in size of [Height, Width], field_id, timesteps
         """
-
         feature = self.labels.iloc[item]
 
         npyfile = os.path.join(self.npyfolder, "fid_{}.npz".format(feature.fid))
@@ -132,6 +131,9 @@ class PlanetReader(torch.utils.data.Dataset):
             target = torch.zeros(len(self.timesteps), *image_stack.shape[1:])
             target[: len(timesteps)] = image_stack
             return target, label, mask, feature.fid
+        elif self.window_slice > 0:
+            # no padding required since size will be consistent
+            return image_stack, label, mask, feature.fid
         else:
             return image_stack, label, mask, feature.fid
 

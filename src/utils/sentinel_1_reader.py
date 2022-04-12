@@ -4,7 +4,7 @@ LAST EDITED:  14.09.2021
 ABOUT SCRIPT:
 It defines a data reader for Sentinel-1 eath observation data
 """
-
+import torch
 import os
 from torch.utils.data import Dataset
 import zipfile
@@ -119,6 +119,11 @@ class S1Reader(Dataset):
 
         if self.return_timesteps:
             return image_stack, label, mask, feature.fid, timesteps
+        elif self.temporal_dropout > 0:
+            # pad with zeros to make the image stack of the same size
+            target = torch.zeros(len(self.timesteps), *image_stack.shape[1:])
+            target[: len(timesteps)] = image_stack
+            return target, label, mask, feature.fid
         else:
             return image_stack, label, mask, feature.fid
 

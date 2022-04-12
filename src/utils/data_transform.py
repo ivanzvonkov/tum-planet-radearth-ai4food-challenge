@@ -128,13 +128,14 @@ class EOTransformer:
             sigma, clip = self.jitter
 
             image_stack = image_stack + np.clip(
-                sigma * np.random.randn(*image_stack.shape), -1 * clip, clip
+                sigma * np.random.randn(*image_stack.shape), -clip, clip
             )
 
         if return_unnormalized_numpy:
             return image_stack, mask
 
         image_stack, mask = self.normalize_and_torchify(image_stack, mask)
+        
         return image_stack, mask
 
 

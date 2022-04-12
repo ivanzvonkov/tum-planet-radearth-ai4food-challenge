@@ -5,6 +5,7 @@ ABOUT SCRIPT:
 It defines a data reader for Sentinel-2 eath observation data
 """
 
+import torch
 import os
 import pdb
 from torch.utils.data import Dataset
@@ -124,6 +125,11 @@ class S2Reader(Dataset):
 
         if self.return_timesteps:
             return image_stack, label, mask, feature.fid, timesteps
+        elif self.temporal_dropout > 0:
+            # pad with zeros to make the image stack of the same size
+            target = torch.zeros(len(self.timesteps), *image_stack.shape[1:])
+            target[: len(timesteps)] = image_stack
+            return target, label, mask, feature.fid
         else:
             return image_stack, label, mask, feature.fid
 
