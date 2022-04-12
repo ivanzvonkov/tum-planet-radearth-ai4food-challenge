@@ -84,10 +84,6 @@ arg_parser.add_argument("--clip", type=float, default=0.05, help="value > 0.0")
 # WandB params
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
 arg_parser.set_defaults(enable_wandb=True)
-arg_parser.add_argument("--name", type=str, default="", help="Manually the run name (e.g., snowy-owl-10); None for automatic naming.")
-arg_parser.add_argument("--unique", dest="unique", action="store_true", help="Make the name unique by appending random digits after the name")
-arg_parser.set_defaults(unique=False)
-arg_parser.add_argument("--project", type=str, default="original", help="original (Ivan), kevin")
 
 config = arg_parser.parse_args().__dict__
 
@@ -109,21 +105,20 @@ if config['competition'] == 'germany':
 elif config['competition'] == 'south_africa':
     assert config['pos'] in ['both_34', '34S_19E_258N', '34S_19E_259N']
 
-if config['project'] == 'original':
+root = str(Path(__file__).parent.resolve())
+
+if "izvonkov" in root:
     config['project'] = "ai4food-challenge"
-else:
+elif "hkjoo" in root:
     config['project'] = "ai4food-challenge-germany"
+else:
+    raise SystemError("Unknown directory")
 
 jitter = None
 
 if config["jitter"]:
     jitter = (config["sigma"], config["clip"])
     assert config["sigma"] > 0. and config["clip"] > 0.    
-
-if str(config['name']) == '':
-    config['name'] = None
-elif config['unique']:
-    config['name'] += "_" + str(int(time.time()))[-4:]
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Data loaders

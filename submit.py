@@ -153,6 +153,10 @@ np.savez(
     report=report,
 )
 
+print("Summary:")
+print("- accuracy: ", accuracy)
+print("- classification: ", report)
+
 # output_frame = pd.DataFrame.from_dict(output_list)
 
 # submission_path = Path(f"submissions/{name}/{pos}-submission-{name}.json")
