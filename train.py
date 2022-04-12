@@ -24,6 +24,13 @@ np.random.seed(seed)
 random.seed(seed)
 torch.cuda.manual_seed_all(seed)
 
+root = str(Path(__file__).parent.resolve())
+
+if "izvonkov" in root:
+    preference = "ivan"
+elif "hkjoo" in root:
+    preference = "kevin"
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Parameters
 # ----------------------------------------------------------------------------------------------------------------------
@@ -43,8 +50,8 @@ arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
 arg_parser.add_argument(
     "--competition", 
     type=str, 
-    default="south_africa",
-    help="germany, south_africa"
+    default="south_africa" if preference == "ivan" else "germany",
+    help="south_africa, germany"
 )
 arg_parser.add_argument(
     "--satellite",
@@ -53,7 +60,10 @@ arg_parser.add_argument(
     help="sentinel_1, sentinel_2, or planet_5day, s1_s2, planet_daily, s1_s2_planet_daily",
 )
 arg_parser.add_argument(
-    "--pos", type=str, default="both_34", help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
+    "--pos", 
+    type=str, 
+    default="both_34" if preference == "ivan" else "33N_18E_242N", 
+    help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
 )
 arg_parser.add_argument("--spatial_backbone", type=str, default="mean_pixel")
 arg_parser.add_argument("--temporal_backbone", type=str, default="tempcnn")
@@ -70,12 +80,12 @@ arg_parser.add_argument("--include_rvi", type=bool, default=False)
 
 # temporal augmentation
 arg_parser.add_argument("--alignment", type=str, default="1to2", help="Can be: 1to2 or 2to1 (76 vs. 41 for SA, 144 vs. 122)")
-arg_parser.add_argument("--s1_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--s2_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0)
+arg_parser.add_argument("--s1_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
+arg_parser.add_argument("--s2_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
+arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
 arg_parser.add_argument("--ta_model_path", type=str, default="")
 arg_parser.add_argument("--ta_probability", type=float, default=0.0)
-arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 < value < 1.0")
+arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 <= value <= 1.0")
 arg_parser.add_argument("--jitter", dest="jitter", action="store_true", help="enable jitter to use --sigma and --clip")
 arg_parser.set_defaults(jitter=False)
 arg_parser.add_argument("--sigma", type=float, default=0.01, help="value > 0.0")
@@ -90,14 +100,15 @@ config = arg_parser.parse_args().__dict__
 assert config["satellite"] in [
     "sentinel_1",
     "sentinel_2",
-    "planet_5day",
     "s1_s2",
+    "planet_5day",
     "planet_daily",
     "s1_s2_planet_daily",
 ]
 assert config["pos"] in ["both_34", "34S_19E_258N", "34S_19E_259N", "33N_18E_242N"]
 assert config["competition"] in ["germany", "south_africa"]
 assert config["split_by"] in [None, "latitude", "longitude"]
+assert 0. <= config["s1_temporal_dropout"] * config["s2_temporal_dropout"] * config["planet_temporal_dropout"] <= 1.
 assert 0. <= config["window_slice"] <= 1.
 
 if config['competition'] == 'germany':
@@ -105,20 +116,18 @@ if config['competition'] == 'germany':
 elif config['competition'] == 'south_africa':
     assert config['pos'] in ['both_34', '34S_19E_258N', '34S_19E_259N']
 
-root = str(Path(__file__).parent.resolve())
-
-if "izvonkov" in root:
+if preference == "ivan":
     config['project'] = "ai4food-challenge"
-elif "hkjoo" in root:
+elif preference == "kevin":
     config['project'] = "ai4food-challenge-germany"
 else:
     raise SystemError("Unknown directory")
 
-jitter = None
-
 if config["jitter"]:
     jitter = (config["sigma"], config["clip"])
-    assert config["sigma"] > 0. and config["clip"] > 0.    
+    assert config["sigma"] > 0. and config["clip"] > 0.
+else:
+    jitter = None
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Data loaders
