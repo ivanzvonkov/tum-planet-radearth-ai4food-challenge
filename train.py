@@ -244,7 +244,6 @@ if config["enable_wandb"]:
     run = wandb.init(
         entity="nasa-harvest",
         project=config['project'],
-        name=config['name'],
         config=config,
         settings=wandb.Settings(start_method="fork"),
     )

@@ -131,9 +131,6 @@ class PlanetReader(torch.utils.data.Dataset):
             target = torch.zeros(len(self.timesteps), *image_stack.shape[1:])
             target[: len(timesteps)] = image_stack
             return target, label, mask, feature.fid
-        elif self.window_slice > 0:
-            # no padding required since size will be consistent
-            return image_stack, label, mask, feature.fid
         else:
             return image_stack, label, mask, feature.fid
 

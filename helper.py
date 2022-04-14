@@ -79,7 +79,6 @@ def load_reader(
         image_size=image_size,
         pse_sample_size=pse_sample_size,
         spatial_backbone=spatial_backbone,
-        normalize=normalize,
         is_train=train_or_test == "train",
         jitter=jitter,
     )
@@ -110,7 +109,7 @@ def load_reader(
         **kwargs,
     ).transform
     planet_transform = PlanetTransform(
-        include_bands=include_bands, include_ndvi=include_ndvi, competition=competition, **kwargs
+        include_bands=include_bands, include_ndvi=include_ndvi, **kwargs
     ).transform
 
     if satellite == "sentinel_1":
