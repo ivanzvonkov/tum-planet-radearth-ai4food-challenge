@@ -41,7 +41,7 @@ arg_parser = ArgumentParser()
 # hyperparam
 arg_parser.add_argument("--batch_size", type=int, default=64)
 arg_parser.add_argument("--num_epochs", type=int, default=100)
-arg_parser.add_argument("--lr", type=float, default=0.001)
+arg_parser.add_argument("--lr", type=float, default=0.001 if preference == "ivan" else 0.00001)
 arg_parser.add_argument("--lr_scheduler", type=str, default="none")
 arg_parser.add_argument("--optimizer", type=str, default="Adam")
 arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
