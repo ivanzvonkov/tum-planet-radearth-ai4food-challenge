@@ -90,6 +90,7 @@ arg_parser.add_argument("--jitter", dest="jitter", action="store_true", help="en
 arg_parser.set_defaults(jitter=False)
 arg_parser.add_argument("--sigma", type=float, default=0.01, help="value > 0.0")
 arg_parser.add_argument("--clip", type=float, default=0.05, help="value > 0.0")
+arg_parser.add_argument("--ta_perturb_amount", type=float, default=0.0)
 
 # WandB params
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
@@ -111,10 +112,10 @@ assert config["split_by"] in [None, "latitude", "longitude"]
 assert 0. <= config["s1_temporal_dropout"] * config["s2_temporal_dropout"] * config["planet_temporal_dropout"] <= 1.
 assert 0. <= config["window_slice"] <= 1.
 
-if config['competition'] == 'germany':
-    assert config['pos'] == "33N_18E_242N"
-elif config['competition'] == 'south_africa':
-    assert config['pos'] in ['both_34', '34S_19E_258N', '34S_19E_259N']
+if config["competition"] == "germany":
+    assert config["pos"] == "33N_18E_242N"
+elif config["competition"] == "south_africa":
+    assert config["pos"] in ["both_34", "34S_19E_258N", "34S_19E_259N"]
 
 if preference == "ivan":
     config['project'] = "ai4food-challenge"
@@ -203,6 +204,7 @@ model = SpatiotemporalModel(
     sequencelength=config["sequence_length"],
     ta_model_path=config["ta_model_path"],
     ta_probability=config["ta_probability"],
+    ta_perturb_amount=config["ta_perturb_amount"],
     device=DEVICE,
 )
 
