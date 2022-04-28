@@ -1,24 +1,52 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pdb
 import torch
 import wandb
 
 from typing import List
 
-from src.utils.data_transform import PlanetTransform
+stats_columns = [
+    "blue_mean",
+    "blue_std",
+    "blue_min",
+    "blue_max",
+    "blue_median",
+    "green_mean",
+    "green_std",
+    "green_min",
+    "green_max",
+    "green_median",
+    "red_mean",
+    "red_std",
+    "red_min",
+    "red_max",
+    "red_median",
+    "nir_mean",
+    "nir_std",
+    "nir_min",
+    "nir_max",
+    "nir_median",
+    "ndvi_mean",
+    "ndvi_std",
+    "ndvi_min",
+    "ndvi_max",
+    "ndvi_median",
+]
+
+mean_min_max = ["mean", "min", "max"]
 
 
 def get_ndvi(image_stack):
     if image_stack.shape[1] == 4:
-        red = image_stack[:, 2] * (PlanetTransform.per_band_std[2]) + (
-            PlanetTransform.per_band_mean[2]
-        )
-        nir = image_stack[:, 3] * (PlanetTransform.per_band_std[3]) + (
-            PlanetTransform.per_band_mean[3]
-        )
+        red = image_stack[:, [2]]
+        nir = image_stack[:, [3]]
     elif image_stack.shape[1] == 13:
-        red = image_stack[:, 3]
-        nir = image_stack[:, 7]
+        red = image_stack[:, [3]]
+        nir = image_stack[:, [7]]
+    elif image_stack.shape[1] == 25:
+        cols = [stats_columns.index(f"ndvi_{col}") for col in mean_min_max]
+        return image_stack[:, cols]
 
     ndvi = (nir - red) / (nir + red)
     ndvi[nir == red] = 0
@@ -28,9 +56,12 @@ def get_ndvi(image_stack):
 
 def get_nir(image_stack):
     if image_stack.shape[1] == 4:
-        return image_stack[:, 3]
+        return image_stack[:, [3]]
     elif image_stack.shape[1] == 13:
-        return image_stack[:, 7]
+        return image_stack[:, [7]]
+    elif image_stack.shape[1] == 25:
+        cols = [stats_columns.index(f"nir_{col}") for col in mean_min_max]
+        return image_stack[:, cols]
 
 
 def plot_preds(
@@ -83,25 +114,46 @@ def plot_preds(
         actual_nir = get_nir(x_np[i])
         actual_ndvi = get_ndvi(x_np[i])
 
-        ax[0].plot(actual_nir, label="Actual NIR")
-        ax[1].plot(actual_ndvi, label="Actual NDVI")
+        is_mean_min_max = actual_nir.shape[1] == 3
+        x = list(range(actual_nir.shape[0]))
 
+        ax[0].plot(actual_nir[:, 0], label="Actual NIR", color="blue")
+        ax[1].plot(actual_ndvi[:, 0], label="Actual NDVI", color="blue")
+        if is_mean_min_max:
+            ax[0].fill_between(
+                x=x, y1=actual_nir[:, 1], y2=actual_nir[:, 2], color="blue", alpha=0.1
+            )
+            ax[1].fill_between(
+                x=x, y1=actual_ndvi[:, 1], y2=actual_ndvi[:, 2], color="blue", alpha=0.1
+            )
+
+        pred_colors = ["orange", "green", "red", "purple"]
         for j, pred_np in enumerate(preds):
 
             pred_nir = get_nir(pred_np[i])
             pred_ndvi = get_ndvi(pred_np[i])
 
-            ax[0].plot(pred_nir, label=f"Generated NIR {j}")
-            ax[1].plot(pred_ndvi, label=f"Generated NDVI {j}")
+            ax[0].plot(pred_nir[:, 0], label=f"Generated NIR {j}", color=pred_colors[j])
+            ax[1].plot(pred_ndvi[:, 0], label=f"Generated NDVI {j}", color=pred_colors[j])
+            if is_mean_min_max:
+                ax[0].fill_between(
+                    x=x, y1=pred_nir[:, 1], y2=pred_nir[:, 2], color=pred_colors[j], alpha=0.1
+                )
+                ax[1].fill_between(
+                    x=x, y1=pred_ndvi[:, 1], y2=pred_ndvi[:, 2], color=pred_colors[j], alpha=0.1
+                )
 
         ax[0].axvline(x=input_timesteps, label="Predictions start", linestyle="--", color="gray")
         ax[1].axvline(x=input_timesteps, label="Predictions start", linestyle="--", color="gray")
 
         timesteps = [input_timesteps + j for j in gp_indexes if (input_timesteps + j) < seq_length]
-        ax[0].plot(timesteps, pred_nir[timesteps], "ro", color="red", label="GP used", markersize=2)
-        ax[1].plot(
-            timesteps, pred_ndvi[timesteps], "ro", color="red", label="GP used", markersize=2
-        )
+        if len(gp_indexes) > 0:
+            ax[0].plot(
+                timesteps, pred_nir[timesteps, 0], "ro", color="red", label="GP used", markersize=2
+            )
+            ax[1].plot(
+                timesteps, pred_ndvi[timesteps, 0], "ro", color="red", label="GP used", markersize=2
+            )
 
         ax[0].set_title("NIR")
         ax[0].set_ylabel("NIR")

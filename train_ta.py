@@ -6,6 +6,7 @@ from torch import nn
 import argparse
 import gpytorch
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
 import random
@@ -27,7 +28,7 @@ arg_parser = argparse.ArgumentParser(description="Train a model for temporal aug
 arg_parser.add_argument("--competition", type=str, default=competition)
 arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
 arg_parser.add_argument("--batch_size", type=int, default=64)
-arg_parser.add_argument("--num_epochs", type=int, default=100)
+arg_parser.add_argument("--num_epochs", type=int, default=10000)
 arg_parser.add_argument(
     "--satellite", type=str, default="planet_daily", help="sentinel_2, planet_daily"
 )
@@ -47,7 +48,7 @@ arg_parser.add_argument("--split_by", type=str, default="longitude", help="latit
 arg_parser.add_argument("--lstm_hidden_size", type=int, default=128)
 arg_parser.add_argument("--lstm_dropout", type=float, default=0.1)
 arg_parser.add_argument("--lstm_layers", type=int, default=1)
-arg_parser.add_argument("--input_timesteps", type=int, default=100)
+arg_parser.add_argument("--input_timesteps", type=int, default=250)
 arg_parser.add_argument("--save_model_threshold", type=float, default=0.2)
 arg_parser.add_argument("--gp_loss_weight", type=float, default=0.01)
 arg_parser.add_argument("--gp_inference_index", type=int, default=10)
@@ -60,7 +61,7 @@ arg_parser.add_argument("--plot_amount", type=int, default=3)
 arg_parser.add_argument("--disable_gp", dest="gp_enabled", action="store_false")
 arg_parser.add_argument("--use_teacher_forcing", dest="teacher_forcing", action="store_true")
 arg_parser.add_argument("--lstm_type", type=str, default="simple")
-arg_parser.add_argument("--num_workers", type=int, default=4)
+arg_parser.add_argument("--num_workers", type=int, default=1)
 arg_parser.set_defaults(gp_enabled=True)
 arg_parser.set_defaults(enable_wandb=True)
 arg_parser.set_defaults(teacher_forcing=False)
@@ -105,6 +106,8 @@ if config["pos"] == "both":
     reader.labels = pd.concat([reader_258.labels, reader_259.labels], ignore_index=True)
 else:
     label_names, reader = load_reader(pos=config["pos"], **kwargs)
+    if isinstance(reader.labels, pd.DataFrame):
+        reader.labels.reset_index(inplace=True)
 
 config["input_dim"] = reader[0][0].shape[1]
 config["sequence_length"] = reader[0][0].shape[0]
@@ -324,7 +327,9 @@ for epoch in range(config["num_epochs"] + 1):
 
     # if not config["debug"]:
     to_log["lstm_predictions_dropout_plot"] = (
-        plot_preds(title="LSTM with dropout", model=model, x=x, preds_with_dropout=3),
+        plot_preds(
+            title="LSTM with dropout", model=model, x=x, preds_with_dropout=3, predict_amount=0
+        ),
     )
     to_log["lstm_predictions_perturb_plot"] = (
         plot_preds(
@@ -342,6 +347,7 @@ for epoch in range(config["num_epochs"] + 1):
             model=model,
             x=x,
             preds_with_dropout=3,
+            predict_amount=0,
             perturb_h_indexes=random.sample(range(0, 144), 10),
             perturb_amount=0.5,
         ),
@@ -360,6 +366,7 @@ for epoch in range(config["num_epochs"] + 1):
         model.input_timesteps = None
 
     wandb.log(to_log)
+    plt.close("all")
 
 
 if config["enable_wandb"]:

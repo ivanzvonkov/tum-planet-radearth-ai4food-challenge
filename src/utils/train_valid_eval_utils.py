@@ -100,7 +100,10 @@ def train_epoch(model, optimizer, criterion, dataloader, device="cpu", scheduler
         for idx, batch in iterator:
             optimizer.zero_grad()
             x, y_true, mask, _ = batch
-            assert np.argwhere(np.isnan(x)).numpy().size == 0 and np.argwhere(np.isinf(x)).numpy().size == 0
+            assert (
+                np.argwhere(np.isnan(x)).numpy().size == 0
+                and np.argwhere(np.isinf(x)).numpy().size == 0
+            )
             model_input = (x.to(device), mask.to(device))
             loss = criterion(model.forward(model_input), y_true.to(device))
             loss.backward()
@@ -209,9 +212,9 @@ def train_epoch_ta(
 
     with torch.no_grad():
         if gp_enabled:
-            return (np.array(ls).mean() for ls in [losses, lstm_losses, gp_losses])
+            return (np.array(ls).sum() for ls in [losses, lstm_losses, gp_losses])
         else:
-            return np.array(losses).mean()
+            return np.array(losses).sum()
 
 
 def validation_epoch_ta(
@@ -262,6 +265,6 @@ def validation_epoch_ta(
                     break
 
         if gp_enabled:
-            return (np.array(ls).mean() for ls in [losses, lstm_losses, gp_losses])
+            return (np.array(ls).sum() for ls in [losses, lstm_losses, gp_losses])
         else:
-            return np.array(losses).mean()
+            return np.array(losses).sum()
