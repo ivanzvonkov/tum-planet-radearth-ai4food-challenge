@@ -98,6 +98,7 @@ arg_parser.set_defaults(enable_wandb=True)
 
 config = arg_parser.parse_args().__dict__
 
+
 assert config["satellite"] in [
     "sentinel_1",
     "sentinel_2",
