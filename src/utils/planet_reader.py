@@ -33,6 +33,7 @@ class PlanetReader(torch.utils.data.Dataset):
         min_area_to_ignore=1000,
         selected_time_points=None,
         tzinfo=None,
+        filter=None,
         temporal_dropout=0.0,
         return_timesteps=False,
         window_slice=0.0,
@@ -56,7 +57,7 @@ class PlanetReader(torch.utils.data.Dataset):
             self.crop_ids = label_ids.tolist()
 
         self.npyfolder = os.path.abspath(input_dir + "/time_series")
-        self.labels = PlanetReader._setup(input_dir, label_dir, self.npyfolder, min_area_to_ignore)
+        self.labels = PlanetReader._setup(input_dir, label_dir, self.npyfolder, min_area_to_ignore, filter)
 
         with (Path(input_dir) / "collection.json").open("rb") as f:
             planet_collection = json.load(f)
@@ -135,7 +136,7 @@ class PlanetReader(torch.utils.data.Dataset):
             return image_stack, label, mask, feature.fid
 
     @staticmethod
-    def _setup(input_dir, label_dir, npyfolder, min_area_to_ignore=1000):
+    def _setup(input_dir, label_dir, npyfolder, min_area_to_ignore=1000, filter=None):
         """
         THIS FUNCTION PREPARES THE PLANET READER BY SPLITTING AND RASTERIZING EACH CROP FIELD AND SAVING INTO SEPERATE FILES FOR SPEED UP THE FURTHER USE OF DATA.
         :param input_dir: directory of input images in TIF format
@@ -145,6 +146,8 @@ class PlanetReader(torch.utils.data.Dataset):
         :return: labels of the saved fields
         """
         labels = gpd.read_file(label_dir)
+        if filter is not None:
+            labels = labels[~labels.fid.isin(filter)]
         labels["path"] = labels["fid"].apply(lambda fid: os.path.join(npyfolder, f"fid_{fid}.npz"))
         labels["exists"] = labels.path.apply(os.path.exists)
         if labels["exists"].all():

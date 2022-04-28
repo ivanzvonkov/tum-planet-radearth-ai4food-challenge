@@ -89,6 +89,7 @@ class S1S2PlanetReader(Dataset):
             min_area_to_ignore=min_area_to_ignore,
             selected_time_points=selected_time_points,
             tzinfo=self.s1_reader.timesteps[0].tzinfo,
+            filter=filter,
             temporal_dropout=planet_temporal_dropout,
             return_timesteps=True,
             window_slice=window_slice,

@@ -60,11 +60,15 @@ def load_reader(
     label_file = f"{root}/{country}_{train_or_test}_labels/{country}_{train_or_test}_labels_{pos}/labels.geojson"
     labels = gpd.read_file(label_file)
 
-    if competition == 'germany':
+    if competition == 'germany' and ("s1" in satellite or "sentinel_1" in satellite):
         with Path("src/s1g_redflag.txt").open('r') as f:
             sentinel_1_redflags = f.readlines()
             sentinel_1_redflags = [int(f) for f in "".join(sentinel_1_redflags).split('\n')]
             labels = labels[~labels.fid.isin(sentinel_1_redflags)]
+
+        filter_status = sentinel_1_redflags
+    else:
+        filter_status = None
 
     label_ids = labels["crop_id"].unique()
     label_names = labels["crop_name"].unique()
@@ -118,7 +122,7 @@ def load_reader(
             label_ids=label_ids,
             label_dir=label_file,
             min_area_to_ignore=min_area_to_ignore,
-            filter=sentinel_1_redflags if competition == 'germany' else None,
+            filter=filter_status,
             transform=s1_transform,
             temporal_dropout=s1_temporal_dropout,
             window_slice=window_slice,
@@ -130,7 +134,7 @@ def load_reader(
             label_dir=label_file,
             min_area_to_ignore=min_area_to_ignore,
             include_cloud=include_cloud,
-            filter=sentinel_1_redflags if competition == 'germany' else None,
+            filter=filter_status,
             transform=s2_transform,
             temporal_dropout=s2_temporal_dropout,
             window_slice=window_slice,
@@ -146,7 +150,7 @@ def load_reader(
             s1_transform=s1_transform,
             s2_transform=s2_transform,
             alignment=alignment,
-            filter=sentinel_1_redflags if competition == 'germany' else None,
+            filter=filter_status,
             s1_temporal_dropout=s1_temporal_dropout,
             s2_temporal_dropout=s2_temporal_dropout,
             window_slice=window_slice,
@@ -158,6 +162,7 @@ def load_reader(
             label_dir=label_file,
             min_area_to_ignore=min_area_to_ignore,
             transform=planet_transform,
+            filter=filter_status,
             temporal_dropout=planet_temporal_dropout,
             window_slice=window_slice,
         )
@@ -168,6 +173,7 @@ def load_reader(
             label_dir=label_file,
             min_area_to_ignore=min_area_to_ignore,
             transform=planet_transform,
+            filter=filter_status,
             temporal_dropout=planet_temporal_dropout,
             window_slice=window_slice,
         )
@@ -179,7 +185,7 @@ def load_reader(
             label_ids=label_ids,
             label_dir=label_file,
             min_area_to_ignore=min_area_to_ignore,
-            filter=sentinel_1_redflags if competition == 'germany' else None,
+            filter=filter_status,
             s1_transform=s1_transform,
             s2_transform=s2_transform,
             planet_transform=planet_transform,
