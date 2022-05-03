@@ -31,6 +31,7 @@ class S1S2PlanetReader(Dataset):
         s1_temporal_dropout=0.0,
         s2_temporal_dropout=0.0,
         planet_temporal_dropout=0.0,
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -63,6 +64,7 @@ class S1S2PlanetReader(Dataset):
             filter=filter,
             temporal_dropout=s1_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         self.s2_reader = S2Reader(
@@ -76,6 +78,7 @@ class S1S2PlanetReader(Dataset):
             filter=filter,
             temporal_dropout=s2_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         self.planet_reader = PlanetReader(
@@ -86,8 +89,10 @@ class S1S2PlanetReader(Dataset):
             min_area_to_ignore=min_area_to_ignore,
             selected_time_points=selected_time_points,
             tzinfo=self.s1_reader.timesteps[0].tzinfo,
+            filter=filter,
             temporal_dropout=planet_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         self.timesteps = self.planet_reader.timesteps

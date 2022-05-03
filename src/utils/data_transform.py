@@ -22,6 +22,7 @@ class EOTransformer:
         image_size=32,
         pse_sample_size=64,
         is_train=True,
+        jitter=None,
     ):
         """
         THIS FUNCTION INITIALIZES THE DATA TRANSFORMER.
@@ -35,9 +36,10 @@ class EOTransformer:
         self.normalize = normalize
         self.pse_sample_size = pse_sample_size
         self.is_train = is_train
+        self.jitter = jitter
 
     def normalize_and_torchify(self, image_stack, mask=None):
-        # image_stack = image_stack * 1e-4
+        image_stack = image_stack * 1e-4
 
         # z-normalize
         if self.normalize:
@@ -125,10 +127,18 @@ class EOTransformer:
 
         #     return synthetic_image_stack, mask
 
+        if self.jitter is not None:
+            sigma, clip = self.jitter
+
+            image_stack = image_stack + np.clip(
+                sigma * np.random.randn(*image_stack.shape), -clip, clip
+            )
+
         if return_unnormalized_numpy:
             return image_stack, mask
 
         image_stack, mask = self.normalize_and_torchify(image_stack, mask)
+        
         return image_stack, mask
 
 
@@ -137,9 +147,8 @@ class PlanetTransform(EOTransformer):
     THIS CLASS INHERITS EOTRANSFORMER FOR DATA AUGMENTATION IN THE PLANET DATA
     """
 
-    # South Africa values
-    per_band_mean = np.array([580.4186, 852.98376, 1136.9423, 2761.0286])
-    per_band_std = np.array([179.95744, 209.66647, 384.34073, 476.9446])
+    per_band_mean = []
+    per_band_std = []
 
     def __init__(
         self,
@@ -148,6 +157,7 @@ class PlanetTransform(EOTransformer):
         **kwargs,
     ):
         super().__init__(**kwargs)
+
         self.include_bands = include_bands
         self.include_ndvi = include_ndvi
 

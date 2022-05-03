@@ -4,7 +4,7 @@ LAST EDITED:  14.09.2021
 ABOUT SCRIPT:
 It defines a data reader for Sentinel-1 eath observation data
 """
-
+import torch
 import os
 from torch.utils.data import Dataset
 import zipfile
@@ -35,6 +35,7 @@ class S1Reader(Dataset):
         filter=None,
         temporal_dropout=0.0,
         return_timesteps=False,
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -64,6 +65,7 @@ class S1Reader(Dataset):
 
         self.temporal_dropout = temporal_dropout
         self.return_timesteps = return_timesteps
+        self.window_slice = window_slice
 
     def __len__(self):
         """
@@ -111,11 +113,22 @@ class S1Reader(Dataset):
             dropout_timesteps = np.random.rand(image_stack.shape[0]) > self.temporal_dropout
             image_stack = image_stack[dropout_timesteps]
             timesteps = self.timesteps[dropout_timesteps]
+        elif self.window_slice > 0.:
+            last_ind_allowed = int(image_stack.shape[0] * (1 - self.window_slice))
+            start = np.random.randint(0, last_ind_allowed)
+            end = start + int(image_stack.shape[0] - last_ind_allowed) + 1
+            image_stack = image_stack[start:end]
+            timesteps = self.timesteps[start:end]
         else:
             timesteps = self.timesteps
 
         if self.return_timesteps:
             return image_stack, label, mask, feature.fid, timesteps
+        elif self.temporal_dropout > 0:
+            # pad with zeros to make the image stack of the same size
+            target = torch.zeros(len(self.timesteps), *image_stack.shape[1:])
+            target[: len(timesteps)] = image_stack
+            return target, label, mask, feature.fid
         else:
             return image_stack, label, mask, feature.fid
 

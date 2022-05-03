@@ -7,7 +7,6 @@ from typing import List
 
 from src.utils.data_transform import PlanetTransform
 
-
 def get_ndvi(image_stack):
     if image_stack.shape[1] == 4:
         red = image_stack[:, 2] * (PlanetTransform.per_band_std[2]) + (

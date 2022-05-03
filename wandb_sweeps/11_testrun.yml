@@ -1,0 +1,14 @@
+program: train.py
+method: grid
+metric:
+  goal: minimize
+  name: losses.valid
+parameters:
+  planet_temporal_dropout:
+    values: [0.0, 0.1]
+  window_slice:
+    values: [0.0, 0.9]
+  satellite:
+    values: [planet_daily, planet_5day]
+  num_epochs:
+    value: 40
