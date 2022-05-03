@@ -156,7 +156,7 @@ class PlanetReader(torch.utils.data.Dataset):
         inputs = glob.glob(input_dir + "/*/*sr.tif", recursive=True)
         tifs = sorted(inputs)
 
-        if "dlr_fusion_competition_germany_train_source_planet" in input_dir:
+        if "dlr_fusion_competition_germany_train_source_planet" == input_dir:
             # Needed because the sr.tif files have been removed for space management
             crs = "EPSG:25833"
         else:
