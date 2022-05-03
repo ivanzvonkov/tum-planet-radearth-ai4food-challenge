@@ -202,7 +202,7 @@ class PlanetReader(torch.utils.data.Dataset):
         tifs = sorted(inputs)
 
         # read coordinate system of tifs and project labels to the same coordinate reference system (crs)
-        if "dlr_fusion_competition_germany_train_source_planet_daily" in input_dir:
+        if "dlr_fusion_competition_germany_train_source_planet" == input_dir:
             # Needed because the sr.tif files have been removed for space management
             crs = "EPSG:25833"
         else:
