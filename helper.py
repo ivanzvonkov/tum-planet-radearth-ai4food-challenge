@@ -61,8 +61,8 @@ def load_reader(
     label_file = f"{root}/{country}_{train_or_test}_labels/{country}_{train_or_test}_labels_{pos}/labels.geojson"
     labels = gpd.read_file(label_file)
 
-    if competition == 'germany' and ("s1" in satellite or "sentinel_1" in satellite):
-        with Path("src/s1g_redflag.txt").open('r') as f:
+    if competition == "germany" and ("s1" in satellite or "sentinel_1" in satellite):
+        with Path("src/s1g_redflag.txt").open("r") as f:
             sentinel_1_redflags = f.readlines()
             sentinel_1_redflags = [int(f) for f in "".join(sentinel_1_redflags).split("\n")]
             labels = labels[~labels.fid.isin(sentinel_1_redflags)]

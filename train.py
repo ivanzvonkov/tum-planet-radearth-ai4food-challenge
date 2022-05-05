@@ -48,8 +48,8 @@ arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
 
 # param
 arg_parser.add_argument(
-    "--competition", 
-    type=str, 
+    "--competition",
+    type=str,
     default="south_africa" if preference == "ivan" else "germany",
     help="south_africa, germany"
 )
@@ -60,8 +60,8 @@ arg_parser.add_argument(
     help="sentinel_1, sentinel_2, or planet_5day, s1_s2, planet_daily, s1_s2_planet_daily",
 )
 arg_parser.add_argument(
-    "--pos", 
-    type=str, 
+    "--pos",
+    type=str,
     default="both_34" if preference == "ivan" else "33N_18E_242N", 
     help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
 )
