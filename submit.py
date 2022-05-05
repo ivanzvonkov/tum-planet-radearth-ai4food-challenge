@@ -54,11 +54,16 @@ _, reader = load_reader(
     include_ndvi=config["include_ndvi"],
     image_size=config["image_size"],
     spatial_backbone=config["spatial_backbone"],
+    include_rvi=config["include_rvi"],
+    pse_sample_size=config["pse_sample_size"],
     min_area_to_ignore=0,
     train_or_test="test",
+    alignment=config["alignment"],
     s1_temporal_dropout=0.0,
     s2_temporal_dropout=0.0,
     planet_temporal_dropout=0.0,
+    window_slice=0.0,
+    jitter=None
 )
 
 print("\u2713 Data loaded")
@@ -143,10 +148,14 @@ report = classification_report(y_true, y_pred, target_names=names, output_dict=T
 print(f"Storing the report at {name}.npz...")
 
 np.savez(
-    f"{name}.npz",
+    f"result/{name}.npz",
     accuracy=accuracy,
     report=report,
 )
+
+print("Summary:")
+print("- accuracy: ", accuracy)
+print("- classification: ", report)
 
 # output_frame = pd.DataFrame.from_dict(output_list)
 

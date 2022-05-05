@@ -26,6 +26,7 @@ class S1S2Reader(Dataset):
         filter=None,
         s1_temporal_dropout=0.0,
         s2_temporal_dropout=0.0,
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -50,6 +51,7 @@ class S1S2Reader(Dataset):
             filter=filter,
             temporal_dropout=s1_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         self.s2_reader = S2Reader(
@@ -63,6 +65,7 @@ class S1S2Reader(Dataset):
             filter=filter,
             temporal_dropout=s2_temporal_dropout,
             return_timesteps=True,
+            window_slice=window_slice,
         )
 
         if alignment == "1to2":
@@ -123,4 +126,23 @@ class S1S2Reader(Dataset):
             s1_s2_image_stack = torch.cat((s2_image_stack[aligned_index], s1_image_stack), dim=1)
             s1_s2_mask = s1_mask
 
+        """
+        -- ISSUE --
+
+        Original:
         return s1_s2_image_stack, s1_label, s1_s2_mask, s1_fid, timesteps
+
+        Issue: 
+        It crashes unless timesteps is not converted to number/str as it cannot convert an object into tensor
+
+        Solution 1:
+        Intify the timesteps (You need to add one more returned value to line 102: 
+        "x, y_true, mask, _ = batch" in train_valid_eval_utils.py)
+        return s1_s2_image_stack, s1_label, s1_s2_mask, s1_fid, np.array([int(f.strftime("%Y%m%d%H%M%S")) for f in timesteps])
+
+        Solution 2: < Selected
+        Not include timesteps since it does not show usefulness at the moment
+        return s1_s2_image_stack, s1_label, s1_s2_mask, s1_fid
+        """
+
+        return s1_s2_image_stack, s1_label, s1_s2_mask, s1_fid        

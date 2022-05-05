@@ -35,9 +35,11 @@ class PlanetReader(torch.utils.data.Dataset):
         min_area_to_ignore=1000,
         selected_time_points=None,
         tzinfo=None,
+        filter=None,
         temporal_dropout=0.0,
         return_timesteps=False,
         csv_dir="",
+        window_slice=0.0,
     ):
         """
         THIS FUNCTION INITIALIZES DATA READER.
@@ -63,7 +65,7 @@ class PlanetReader(torch.utils.data.Dataset):
         if self.use_npz:
 
             self.labels = PlanetReader._setup(
-                input_dir, label_dir, self.npyfolder, min_area_to_ignore
+                input_dir, label_dir, self.npyfolder, min_area_to_ignore, filter
             )
 
             with (Path(input_dir) / "collection.json").open("rb") as f:
@@ -101,6 +103,7 @@ class PlanetReader(torch.utils.data.Dataset):
 
         self.temporal_dropout = temporal_dropout
         self.return_timesteps = return_timesteps
+        self.window_slice = window_slice
 
     def __len__(self):
         """
@@ -158,6 +161,12 @@ class PlanetReader(torch.utils.data.Dataset):
             dropout_timesteps = np.random.rand(image_stack.shape[0]) > self.temporal_dropout
             image_stack = image_stack[dropout_timesteps]
             timesteps = self.timesteps[dropout_timesteps]
+        elif self.window_slice > 0.:
+            last_ind_allowed = int(image_stack.shape[0] * (1 - self.window_slice))
+            start = np.random.randint(0, last_ind_allowed)
+            end = start + int(image_stack.shape[0] - last_ind_allowed) + 1
+            image_stack = image_stack[start:end]
+            timesteps = self.timesteps[start:end]
         else:
             timesteps = self.timesteps
 
@@ -172,7 +181,7 @@ class PlanetReader(torch.utils.data.Dataset):
             return image_stack, label, mask, feature_fid
 
     @staticmethod
-    def _setup(input_dir, label_dir, npyfolder, min_area_to_ignore=1000):
+    def _setup(input_dir, label_dir, npyfolder, min_area_to_ignore=1000, filter=None):
         """
         THIS FUNCTION PREPARES THE PLANET READER BY SPLITTING AND RASTERIZING EACH CROP FIELD AND SAVING INTO SEPERATE FILES FOR SPEED UP THE FURTHER USE OF DATA.
         :param input_dir: directory of input images in TIF format
@@ -182,6 +191,8 @@ class PlanetReader(torch.utils.data.Dataset):
         :return: labels of the saved fields
         """
         labels = gpd.read_file(label_dir)
+        if filter is not None:
+            labels = labels[~labels.fid.isin(filter)]
         labels["path"] = labels["fid"].apply(lambda fid: os.path.join(npyfolder, f"fid_{fid}.npz"))
         labels["exists"] = labels.path.apply(os.path.exists)
         if labels["exists"].all():
@@ -191,7 +202,7 @@ class PlanetReader(torch.utils.data.Dataset):
         tifs = sorted(inputs)
 
         # read coordinate system of tifs and project labels to the same coordinate reference system (crs)
-        if "dlr_fusion_competition_germany_train_source_planet_daily" in input_dir:
+        if "dlr_fusion_competition_germany_train_source_planet" == input_dir:
             # Needed because the sr.tif files have been removed for space management
             crs = "EPSG:25833"
         else:

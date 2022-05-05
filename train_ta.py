@@ -24,7 +24,12 @@ competition = "germany"
 # Argument parser for command line arguments
 
 arg_parser = argparse.ArgumentParser(description="Train a model for temporal augmentation")
-arg_parser.add_argument("--competition", type=str, default=competition)
+arg_parser.add_argument(
+    "--competition", 
+    type=str, 
+    default="south_africa",
+    help="germany, south_africa"
+)
 arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
 arg_parser.add_argument("--batch_size", type=int, default=64)
 arg_parser.add_argument("--num_epochs", type=int, default=100)

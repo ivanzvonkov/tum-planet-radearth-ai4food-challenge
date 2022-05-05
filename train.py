@@ -24,16 +24,35 @@ np.random.seed(seed)
 random.seed(seed)
 torch.cuda.manual_seed_all(seed)
 
+root = str(Path(__file__).parent.resolve())
+
+if "izvonkov" in root:
+    preference = "ivan"
+elif "hkjoo" in root:
+    preference = "kevin"
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Parameters
 # ----------------------------------------------------------------------------------------------------------------------
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 arg_parser = ArgumentParser()
-arg_parser.add_argument("--competition", type=str, default="germany", help="germany, south_africa")
-arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
+
+# hyperparam
 arg_parser.add_argument("--batch_size", type=int, default=64)
 arg_parser.add_argument("--num_epochs", type=int, default=100)
+arg_parser.add_argument("--lr", type=float, default=0.001 if preference == "ivan" else 0.00001)
+arg_parser.add_argument("--lr_scheduler", type=str, default="none")
+arg_parser.add_argument("--optimizer", type=str, default="Adam")
+arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
+
+# param
+arg_parser.add_argument(
+    "--competition",
+    type=str,
+    default="south_africa" if preference == "ivan" else "germany",
+    help="south_africa, germany"
+)
 arg_parser.add_argument(
     "--satellite",
     type=str,
@@ -43,84 +62,74 @@ arg_parser.add_argument(
 arg_parser.add_argument(
     "--pos",
     type=str,
-    default="33N_18E_242N",
-    help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N",
+    default="both_34" if preference == "ivan" else "33N_18E_242N", 
+    help="both_34, 34S_19E_258N, 34S_19E_259N, 33N_18E_242N"
 )
-arg_parser.add_argument("--lr", type=float, default=0.001)
-arg_parser.add_argument("--optimizer", type=str, default="Adam")
-arg_parser.add_argument("--loss", type=str, default="CrossEntropyLoss")
-arg_parser.add_argument("--spatial_backbone", type=str, default="stats")
+arg_parser.add_argument("--spatial_backbone", type=str, default="mean_pixel")
 arg_parser.add_argument("--temporal_backbone", type=str, default="tempcnn")
+arg_parser.add_argument("--model_type", type=str, default="spatiotemporal")
 arg_parser.add_argument("--image_size", type=int, default=32)
-arg_parser.add_argument("--save_model_threshold", type=float, default=0.7)
 arg_parser.add_argument("--pse_sample_size", type=int, default=32)
+arg_parser.add_argument("--save_model_threshold", type=float, default=0.7)
 arg_parser.add_argument("--validation_split", type=float, default=0.2)
 arg_parser.add_argument("--split_by", type=str, default="longitude", help="latitude or longitude")
 arg_parser.add_argument("--include_bands", type=bool, default=True)
 arg_parser.add_argument("--include_cloud", type=bool, default=True)
 arg_parser.add_argument("--include_ndvi", type=bool, default=False)
 arg_parser.add_argument("--include_rvi", type=bool, default=False)
-arg_parser.add_argument(
-    "--alignment",
-    type=str,
-    default="1to2",
-    help="Can be: 1to2 or 2to1 (76 vs. 41 for SA, 144 vs. 122)",
-)
 
-# WandB params
-arg_parser.add_argument("--s1_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--s2_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0)
-arg_parser.add_argument("--lr_scheduler", type=str, default="none")
+# temporal augmentation
+arg_parser.add_argument("--alignment", type=str, default="1to2", help="Can be: 1to2 or 2to1 (76 vs. 41 for SA, 144 vs. 122)")
+arg_parser.add_argument("--s1_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
+arg_parser.add_argument("--s2_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
+arg_parser.add_argument("--planet_temporal_dropout", type=float, default=0.0, help="0.0 <= value <= 1.0")
 arg_parser.add_argument("--ta_model_path", type=str, default="")
 arg_parser.add_argument("--ta_probability", type=float, default=0.0)
+arg_parser.add_argument("--window_slice", type=float, default=0.0, help="0.0 <= value <= 1.0")
+arg_parser.add_argument("--jitter", dest="jitter", action="store_true", help="enable jitter to use --sigma and --clip")
+arg_parser.set_defaults(jitter=False)
+arg_parser.add_argument("--sigma", type=float, default=0.01, help="value > 0.0")
+arg_parser.add_argument("--clip", type=float, default=0.05, help="value > 0.0")
 arg_parser.add_argument("--ta_perturb_amount", type=float, default=0.0)
 
+# WandB params
 arg_parser.add_argument("--disable_wandb", dest="enable_wandb", action="store_false")
 arg_parser.set_defaults(enable_wandb=True)
-arg_parser.add_argument(
-    "--name",
-    type=str,
-    default=None,
-    help="Manually the run name (e.g., snowy-owl-10); None for automatic naming.",
-)
-arg_parser.add_argument(
-    "--unique",
-    dest="unique",
-    action="store_true",
-    help="Make the name unique by appending random digits after the name",
-)
-arg_parser.set_defaults(unique=False)
-arg_parser.add_argument("--project", type=str, default="original", help="original (Ivan), kevin")
 
 config = arg_parser.parse_args().__dict__
+
 
 assert config["satellite"] in [
     "sentinel_1",
     "sentinel_2",
-    "planet_5day",
     "s1_s2",
+    "planet_5day",
     "planet_daily",
     "s1_s2_planet_daily",
 ]
 assert config["pos"] in ["both_34", "34S_19E_258N", "34S_19E_259N", "33N_18E_242N"]
 assert config["competition"] in ["germany", "south_africa"]
 assert config["split_by"] in [None, "latitude", "longitude"]
+assert 0. <= config["s1_temporal_dropout"] * config["s2_temporal_dropout"] * config["planet_temporal_dropout"] <= 1.
+assert 0. <= config["window_slice"] <= 1.
 
 if config["competition"] == "germany":
     assert config["pos"] == "33N_18E_242N"
 elif config["competition"] == "south_africa":
     assert config["pos"] in ["both_34", "34S_19E_258N", "34S_19E_259N"]
 
-if config["project"] == "original":
-    config["project"] = "ai4food-challenge"
+if preference == "ivan":
+    config['project'] = "ai4food-challenge"
+elif preference == "kevin":
+    config['project'] = "ai4food-challenge-germany"
 else:
-    config["project"] = "ai4food-challenge-germany"
+    raise SystemError("Unknown directory")
 
-if str(config["name"]) == "None":
-    config["name"] = None
-elif config["unique"]:
-    config["name"] += "_" + str(int(time.time()))[-4:]
+if config["jitter"]:
+    jitter = (config["sigma"], config["clip"])
+    assert config["sigma"] > 0. and config["clip"] > 0.
+else:
+    jitter = None
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Data loaders
@@ -142,6 +151,8 @@ kwargs = dict(
     s1_temporal_dropout=config["s1_temporal_dropout"],
     s2_temporal_dropout=config["s2_temporal_dropout"],
     planet_temporal_dropout=config["planet_temporal_dropout"],
+    window_slice=config["window_slice"],
+    jitter=jitter
 )
 
 if config["pos"] == "both_34":
@@ -236,8 +247,7 @@ print(config)
 if config["enable_wandb"]:
     run = wandb.init(
         entity="nasa-harvest",
-        project=config["project"],
-        name=config["name"],
+        project=config['project'],
         config=config,
         settings=wandb.Settings(start_method="fork"),
     )
